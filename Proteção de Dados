@@ -1,0 +1,31 @@
+# Exemplo: AES-GCM com cryptography
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import os
+
+def gerar_chave_aes256():
+    return AESGCM.generate_key(bit_length=256)  # 32 bytes
+
+def cifrar_aes_gcm(chave, plaintext, associated_data=None):
+    # nonce de 12 bytes é padrão seguro para GCM
+    nonce = os.urandom(12)
+    aesgcm = AESGCM(chave)
+    ct = aesgcm.encrypt(nonce, plaintext, associated_data)
+    # Retorne nonce + ciphertext (ct já contém tag)
+    return nonce + ct
+
+def decifrar_aes_gcm(chave, nonce_and_ct, associated_data=None):
+    nonce = nonce_and_ct[:12]
+    ct = nonce_and_ct[12:]
+    aesgcm = AESGCM(chave)
+    return aesgcm.decrypt(nonce, ct, associated_data)
+
+# Uso:
+if __name__ == "__main__":
+    chave = gerar_chave_aes256()
+    dados = b"segredo muito importante"
+    aad = b"contexto-ou-metadado"  # opcional, autenticado junto com o ciphertext
+    empacotado = cifrar_aes_gcm(chave, dados, aad)
+    print("Cifrado (bytes):", empacotado.hex())
+
+    rec = decifrar_aes_gcm(chave, empacotado, aad)
+    print("Decifrado:", rec)
